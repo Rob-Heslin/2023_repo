@@ -11,6 +11,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.PeriodicCounter;
@@ -32,19 +33,19 @@ public class DriveSubsystem extends SubsystemBase {
         private static final RevMaxSwerveModule m_frontLeft = new RevMaxSwerveModule(
             DriveCANConstants.kFrontLeftDrivingCanId,
             DriveCANConstants.kFrontLeftTurningCanId,
-            DriveConstants.kFrontLeftChassisAngularOffset);
+            Preferences.getDouble("frontLeftOffset", 0.0));
         private static final RevMaxSwerveModule m_frontRight = new RevMaxSwerveModule(
             DriveCANConstants.kFrontRightDrivingCanId,
             DriveCANConstants.kFrontRightTurningCanId,
-            DriveConstants.kFrontRightChassisAngularOffset);
+            Preferences.getDouble("frontRightOffset", 0.0));
         private static final RevMaxSwerveModule m_backLeft = new RevMaxSwerveModule(
             DriveCANConstants.kRearLeftDrivingCanId,
             DriveCANConstants.kRearLeftTurningCanId,
-            DriveConstants.kBackLeftChassisAngularOffset);
+            Preferences.getDouble("backLeftOffset", 0.0));
         private static final RevMaxSwerveModule m_backRight = new RevMaxSwerveModule(
             DriveCANConstants.kRearRightDrivingCanId,
             DriveCANConstants.kRearRightTurningCanId,
-            DriveConstants.kBackRightChassisAngularOffset);
+            Preferences.getDouble("backRightOffset", 0.0));
     }
 
     private ADXRS450_Gyro m_gyro = new ADXRS450_Gyro();
@@ -173,6 +174,34 @@ public class DriveSubsystem extends SubsystemBase {
         SwerveModules.m_backLeft.resetEncoders();
         SwerveModules.m_frontRight.resetEncoders();
         SwerveModules.m_backRight.resetEncoders();
+    }
+
+    /**
+     * Adjust offsets, robot must be restarted to work. modules 
+     * should be pointed forward before running.
+     * 
+     * @author Rob-Heslin
+     */
+    public void setModuleZeros(){
+        //pull the current offset that is set in the module.
+        double frontLeftOffset = Preferences.getDouble("frontLeftOffset", 0.0);
+        //get the current angle and add to the offset, the result is a new offset, robot must be restarted for module to accept
+        frontLeftOffset += SwerveModules.m_frontLeft.getState().angle.getRadians();
+        //set the new offset into Prefferences, to be recalled next boot
+        Preferences.setDouble("frontLeftOffset", frontLeftOffset);
+
+        double frontRightOffset = Preferences.getDouble("frontRightOffset", 0.0);
+        frontRightOffset += SwerveModules.m_frontRight.getState().angle.getRadians();
+        Preferences.setDouble("frontRightOffset", frontRightOffset);
+
+        double backLeftOffset = Preferences.getDouble("backLeftOffset", 0.0);
+        backLeftOffset += SwerveModules.m_backLeft.getState().angle.getRadians();
+        Preferences.setDouble("backLeftOffset", backLeftOffset);
+
+        double backRightOffset = Preferences.getDouble("backRightOffset", 0.0);
+        backRightOffset += SwerveModules.m_backRight.getState().angle.getRadians();
+        Preferences.setDouble("backRightOffset", backRightOffset);
+
     }
 
     /**
